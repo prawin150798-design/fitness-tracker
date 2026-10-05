@@ -72,6 +72,7 @@ footer{max-width:1120px;margin:20px auto;color:var(--muted);font-size:11px;paddi
       <div><label>Day</label><select id="woDay" onchange="renderWorkoutForm()"></select></div>
     </div>
   </div>
+  <div id="workoutAutosaveStatus" class="small muted" style="margin-top:10px">Autosave ready</div>
   <div id="workoutForm" style="margin-top:12px"></div>
   <div class="right" style="margin-top:12px"><button class="btn" onclick="saveWorkoutSession()">Save workout</button></div>
 </section>
@@ -206,7 +207,7 @@ const state = loadState();
 const settings = loadSettings();
 
 function loadState(){
-  const blank={weights:[],measurements:[],workouts:[],habits:[],food:[]};
+  const blank={weights:[],measurements:[],workouts:[],habits:[],food:[],drafts:{}};
   try{return {...blank,...JSON.parse(localStorage.getItem(KEY)||"{}")}}catch(e){return blank}
 }
 function saveState(){localStorage.setItem(KEY,JSON.stringify(state))}
@@ -285,7 +286,7 @@ function dedupe(arr,type){
     let key;
     if(type==="weights")key=[x.date,x.weight,x.average7,x.notes].join("|");
     if(type==="measurements")key=[x.date,x.waist,x.narrow,x.neck,x.chest,x.arm,x.thigh].join("|");
-    if(type==="workouts")key=[x.date,x.day,x.focus,x.exercise,x.set,x.weight,x.reps,x.rir,x.notes].join("|");
+    if(type==="workouts")key=(x.sessionId ? ["session",x.sessionId,x.set,x.exercise].join("|") : [x.date,x.day,x.focus,x.exercise,x.set,x.weight,x.reps,x.rir,x.notes].join("|"));
     if(type==="habits")key=[x.date,x.steps,x.sleep,x.water,x.cardio,x.mood,x.energy,x.notes].join("|");
     if(type==="food")key=[x.date,x.meal,x.food,x.quantity,x.protein,x.calories,x.notes].join("|");
     if(seen.has(key))return false;seen.add(key);return true;
@@ -359,6 +360,7 @@ function drawLine(id,data,suffix){
 
 function initWorkout(){
   document.getElementById("woDate").value ||= today();
+  document.getElementById("woDate").onchange=renderWorkoutForm;
   const day=new Date(document.getElementById("woDate").value+"T12:00:00").toLocaleDateString("en-US",{weekday:"long"});
   const sel=document.getElementById("woDay");
   sel.innerHTML=Object.keys(PLAN).map(d=>`<option ${d===day?"selected":""}>${d}</option>`).join("");
@@ -382,29 +384,251 @@ function suggestion(ex,repMin,repMax){
   return {weight:weight??"",reps:Math.min(repMax,Math.max(repMin,reps)),rir:2,note};
 }
 function increment(ex){return /carry|push-up/i.test(ex)?0:1}
+function workoutDraftKey(date,day){
+  return `${date}|${day}`;
+}
+
+function getWorkoutDraft(date,day){
+  const key=workoutDraftKey(date,day);
+  if(!state.drafts) state.drafts={};
+  if(!state.drafts[key]){
+    state.drafts[key]={
+      sessionId:"ws_"+Date.now().toString(36)+"_"+Math.random().toString(36).slice(2,8),
+      date,day,focus:PLAN[day]?.focus||"",
+      exercises:{},completed:false,updatedAt:new Date().toISOString()
+    };
+  }
+  return state.drafts[key];
+}
+
+function setWorkoutAutosaveStatus(text,kind="muted"){
+  const el=document.getElementById("workoutAutosaveStatus");
+  if(!el)return;
+  el.textContent=text;
+  el.className="small "+(kind==="ok"?"":"muted");
+  if(kind==="ok")el.style.color="var(--good)";
+  else el.style.color="";
+}
+
+let workoutAutosaveTimer=null;
+let workoutAutosaveQueue=Promise.resolve();
+
+function scheduleWorkoutAutosave(){
+  const date=document.getElementById("woDate").value||today();
+  const day=document.getElementById("woDay").value;
+  captureWorkoutDraft(date,day);
+
+  clearTimeout(workoutAutosaveTimer);
+  setWorkoutAutosaveStatus("Saving locally…");
+
+  workoutAutosaveTimer=setTimeout(()=>{
+    autosaveWorkoutDraft(date,day);
+  },800);
+}
+
+function captureWorkoutDraft(date,day){
+  const p=PLAN[day];
+  const draft=getWorkoutDraft(date,day);
+
+  draft.date=date;
+  draft.day=day;
+  draft.focus=p.focus;
+  draft.updatedAt=new Date().toISOString();
+
+  p.exercises.forEach((e,idx)=>{
+    const weights=[...document.querySelectorAll(`.set-weight[data-ex="${idx}"]`)].map(x=>x.value);
+    const reps=[...document.querySelectorAll(`.set-reps[data-ex="${idx}"]`)].map(x=>x.value);
+    const rirs=[...document.querySelectorAll(`.set-rir[data-ex="${idx}"]`)].map(x=>x.value);
+    const notes=document.querySelector(`.ex-note[data-ex="${idx}"]`)?.value||"";
+
+    draft.exercises[e[0]]={
+      name:e[0],weights,reps,rirs,notes
+    };
+  });
+
+  saveState();
+  return draft;
+}
+
+function draftExercisesPayload(draft){
+  return Object.values(draft.exercises||{})
+    .map(ex=>({
+      name:ex.name,
+      weights:(ex.weights||[]).map(v=>num(v)||""),
+      reps:(ex.reps||[]).map(v=>num(v)||""),
+      rirs:(ex.rirs||[]).map(v=>num(v)??""),
+      notes:ex.notes||""
+    }))
+    .filter(ex=>ex.reps.some(Boolean));
+}
+
+function updateLocalWorkoutRowsFromDraft(draft){
+  const rows=draftExercisesPayload(draft);
+  state.workouts=state.workouts.filter(x=>x.sessionId!==draft.sessionId);
+
+  rows.forEach(ex=>{
+    ex.reps.forEach((reps,i)=>{
+      if(!reps)return;
+      state.workouts.push({
+        sessionId:draft.sessionId,
+        date:draft.date,
+        day:draft.day,
+        focus:draft.focus,
+        exercise:ex.name,
+        set:i+1,
+        weight:num(ex.weights[i]),
+        reps:num(reps),
+        rir:num(ex.rirs[i]),
+        notes:ex.notes||""
+      });
+    });
+  });
+}
+
+function autosaveWorkoutDraft(date,day){
+  const draft=captureWorkoutDraft(date,day);
+  updateLocalWorkoutRowsFromDraft(draft);
+  saveState();
+  renderHistory();
+
+  const exercises=draftExercisesPayload(draft);
+
+  // Nothing entered yet: keep the draft locally but don't create a Sheet row.
+  if(!exercises.length){
+    setWorkoutAutosaveStatus("Saved locally · waiting for your first set");
+    return;
+  }
+
+  setWorkoutAutosaveStatus("Saving to Google Sheets…");
+
+  const payload={
+    type:"workout",
+    sessionId:draft.sessionId,
+    date:draft.date,
+    day:draft.day,
+    focus:draft.focus,
+    exercises
+  };
+
+  // Queue autosaves so two rapid edits cannot race each other.
+  workoutAutosaveQueue=workoutAutosaveQueue
+    .then(()=>postRemote(payload))
+    .then(()=>{
+      setWorkoutAutosaveStatus("Autosaved ✓","ok");
+      setStatus("Saved","ok");
+    })
+    .catch(()=>{
+      setWorkoutAutosaveStatus("Saved locally · Sheets will sync when available");
+      setStatus("Local only","");
+    });
+}
+
+function loadDraftIntoForm(draft,p){
+  p.exercises.forEach((e,idx)=>{
+    const ex=draft.exercises?.[e[0]];
+    if(!ex)return;
+
+    [...document.querySelectorAll(`.set-weight[data-ex="${idx}"]`)].forEach((el,i)=>{
+      if(ex.weights?.[i]!==undefined)el.value=ex.weights[i];
+    });
+    [...document.querySelectorAll(`.set-reps[data-ex="${idx}"]`)].forEach((el,i)=>{
+      if(ex.reps?.[i]!==undefined)el.value=ex.reps[i];
+    });
+    [...document.querySelectorAll(`.set-rir[data-ex="${idx}"]`)].forEach((el,i)=>{
+      if(ex.rirs?.[i]!==undefined)el.value=ex.rirs[i];
+    });
+
+    const note=document.querySelector(`.ex-note[data-ex="${idx}"]`);
+    if(note)note.value=ex.notes||"";
+  });
+}
+
+function attachWorkoutAutosaveListeners(){
+  document.querySelectorAll("#workoutForm input").forEach(el=>{
+    el.addEventListener("input",scheduleWorkoutAutosave);
+    el.addEventListener("change",scheduleWorkoutAutosave);
+  });
+}
+
 function renderWorkoutForm(){
   const day=document.getElementById("woDay").value, p=PLAN[day];
-  if(!p.exercises.length){document.getElementById("workoutForm").innerHTML=`<div class="card"><div class="notice">${p.focus}. No resistance session scheduled.</div></div>`;return}
+  const date=document.getElementById("woDate").value||today();
+  const draft=getWorkoutDraft(date,day);
+
+  if(!p.exercises.length){
+    document.getElementById("workoutForm").innerHTML=
+      `<div class="card"><div class="notice">${p.focus}. No resistance session scheduled.</div></div>`;
+    setWorkoutAutosaveStatus("No workout scheduled");
+    return;
+  }
+
   document.getElementById("workoutForm").innerHTML=p.exercises.map((e,idx)=>{
     const s=suggestion(e[0],e[3],e[4]);
-    const sets=Array.from({length:e[2]},(_,i)=>`<div class="setrow"><div class="setno">S${i+1}</div><input class="set-weight" data-ex="${idx}" type="number" step="0.5" placeholder="kg" value="${esc(s.weight)}"><input class="set-reps" data-ex="${idx}" type="number" min="1" placeholder="reps" value="${esc(s.reps)}"><input class="set-rir" data-ex="${idx}" type="number" min="0" max="5" placeholder="RIR" value="${esc(s.rir)}"><button type="button" class="btn ghost" onclick="clearSet(this)">×</button></div>`).join("");
-    return `<div class="exercise"><div class="exercise-top"><div><div class="exercise-name">${esc(e[0])}</div><div class="meta">${esc(e[1])} · target ${e[2]} sets × ${e[3]}–${e[4]}</div></div><span class="pill">${esc(s.note)}</span></div><div class="sets">${sets}</div><input class="ex-note" data-ex="${idx}" placeholder="Exercise note (optional)"></div>`;
+    const saved=draft.exercises?.[e[0]];
+    const sets=Array.from({length:e[2]},(_,i)=>{
+      const weight=saved?.weights?.[i] ?? s.weight;
+      const reps=saved?.reps?.[i] ?? s.reps;
+      const rir=saved?.rirs?.[i] ?? s.rir;
+      return `<div class="setrow">
+        <div class="setno">S${i+1}</div>
+        <input class="set-weight" data-ex="${idx}" type="number" step="0.5" placeholder="kg" value="${esc(weight)}">
+        <input class="set-reps" data-ex="${idx}" type="number" min="1" placeholder="reps" value="${esc(reps)}">
+        <input class="set-rir" data-ex="${idx}" type="number" min="0" max="5" placeholder="RIR" value="${esc(rir)}">
+        <button type="button" class="btn ghost" onclick="clearSet(this);scheduleWorkoutAutosave()">×</button>
+      </div>`;
+    }).join("");
+
+    return `<div class="exercise">
+      <div class="exercise-top">
+        <div><div class="exercise-name">${esc(e[0])}</div><div class="meta">${esc(e[1])} · target ${e[2]} sets × ${e[3]}–${e[4]}</div></div>
+        <span class="pill">${esc(s.note)}</span>
+      </div>
+      <div class="sets">${sets}</div>
+      <input class="ex-note" data-ex="${idx}" placeholder="Exercise note (optional)" value="${esc(saved?.notes||"")}">
+    </div>`;
   }).join("");
+
+  attachWorkoutAutosaveListeners();
+
+  const hasSaved=draftExercisesPayload(draft).length>0;
+  setWorkoutAutosaveStatus(hasSaved?"Draft restored · autosave is on":"Autosave is on");
 }
-function clearSet(btn){const row=btn.parentElement;row.querySelectorAll("input").forEach((x,i)=>x.value=i===1?"":i===2?"":"")}
+
 function saveWorkoutSession(){
-  const date=document.getElementById("woDate").value||today(),day=document.getElementById("woDay").value,p=PLAN[day];
-  const exercises=p.exercises.map((e,idx)=>{
-    const weights=[...document.querySelectorAll(`.set-weight[data-ex="${idx}"]`)].map(x=>num(x.value)||"");
-    const reps=[...document.querySelectorAll(`.set-reps[data-ex="${idx}"]`)].map(x=>num(x.value)||"");
-    const rirs=[...document.querySelectorAll(`.set-rir[data-ex="${idx}"]`)].map(x=>num(x.value)??"");
-    const notes=document.querySelector(`.ex-note[data-ex="${idx}"]`)?.value||"";
-    return {name:e[0],reps,weights,rirs,notes};
-  }).filter(e=>e.reps.some(Boolean));
-  if(!exercises.length){alert("Enter at least one completed set.");return}
-  saveAndSync({type:"workout",date,day,focus:p.focus,exercises},()=>{
-    exercises.forEach(ex=>ex.reps.forEach((reps,i)=>{if(reps)state.workouts.push({date,day,focus:p.focus,exercise:ex.name,set:i+1,weight:num(ex.weights[i]),reps:num(reps),rir:num(ex.rirs[i]),notes:ex.notes||""})}));
-  });
+  const date=document.getElementById("woDate").value||today();
+  const day=document.getElementById("woDay").value;
+  const p=PLAN[day];
+  const draft=captureWorkoutDraft(date,day);
+
+  if(!draftExercisesPayload(draft).length){
+    alert("Enter at least one completed set.");
+    return;
+  }
+
+  draft.completed=true;
+  draft.updatedAt=new Date().toISOString();
+  updateLocalWorkoutRowsFromDraft(draft);
+  saveState();
+
+  const payload={
+    type:"workout",
+    sessionId:draft.sessionId,
+    date,day,focus:p.focus,
+    exercises:draftExercisesPayload(draft)
+  };
+
+  setWorkoutAutosaveStatus("Saving final session…");
+  workoutAutosaveQueue=workoutAutosaveQueue
+    .then(()=>postRemote(payload))
+    .then(()=>{
+      setWorkoutAutosaveStatus("Workout saved ✓","ok");
+      setStatus("Saved","ok");
+      renderHistory();
+    })
+    .catch(()=>{
+      setWorkoutAutosaveStatus("Saved locally · Sheets will sync when available");
+      setStatus("Local only","");
+    });
 }
 
 function saveWeightForm(){
