@@ -185,24 +185,70 @@ const DEFAULT_URL = "https://script.google.com/macros/s/AKfycbxgI9Sj-9u2SLYdyU2s
 const KEY = "fitnessTrackerV3";
 const SETTINGS_KEY = "fitnessTrackerV3Settings";
 
-const PLAN = {
-  Monday:{focus:"Upper A", exercises:[
-    ["DB Chest Press","horizontal push",2,8,12],["One-arm DB Row","horizontal pull",2,8,12],["DB Shoulder Press","vertical push",2,8,12],["DB Lateral Raise","accessory",2,10,15],["Farmer Carry","carry",3,30,45],["Pallof Press","anti-rotation",2,10,12]
-  ]},
-  Tuesday:{focus:"Lower + Core", exercises:[
-    ["Goblet Squat","squat",2,8,12],["DB RDL","hinge",2,8,12],["Step-up","single-leg",2,8,12],["Single-leg RDL","single-leg hinge",2,8,10],["Dead Bug","core",2,8,12],["Suitcase Carry","carry",3,30,45]
-  ]},
-  Wednesday:{focus:"Recovery", exercises:[]},
-  Thursday:{focus:"Upper B", exercises:[
-    ["Push-ups","horizontal push",2,8,15],["One-arm DB Row","horizontal pull",2,8,12],["DB Floor Press","horizontal push",2,8,12],["Half-kneeling Single-arm Press","vertical push",2,8,12],["Rear-delt Fly","accessory",2,10,15],["Farmer Carry","carry",3,30,45]
-  ]},
-  Friday:{focus:"Full Body", exercises:[
-    ["Goblet Squat","squat",2,8,12],["DB RDL","hinge",2,8,12],["DB Chest Press","horizontal push",2,8,12],["One-arm DB Row","horizontal pull",2,8,12],["Step-up","single-leg",2,8,12],["Pallof Press","anti-rotation",2,10,12],["Suitcase Carry","carry",3,30,45]
-  ]},
-  Saturday:{focus:"Walk / Easy Cardio", exercises:[]},
-  Sunday:{focus:"Rest", exercises:[]}
-};
 
+const PLAN = {
+  Monday: {
+    focus: "Shoulders + Triceps",
+    exercises: [
+      ["DB Shoulder Press", "vertical push", 2, 8, 12],
+      ["DB Lateral Raise", "side delts", 3, 12, 20],
+      ["Rear-delt Fly", "rear delts", 2, 12, 20],
+      ["Overhead DB Triceps Extension", "triceps", 3, 10, 15],
+      ["DB Chest Press", "horizontal push", 2, 8, 15]
+    ]
+  },
+
+  Tuesday: {
+    focus: "Lower + Core",
+    exercises: [
+      ["Goblet Squat", "squat", 2, 10, 15],
+      ["DB RDL", "hinge", 2, 10, 15],
+      ["Step-up", "single-leg", 2, 8, 12],
+      ["Dead Bug", "core", 2, 8, 12],
+      ["Suitcase Carry", "carry", 2, 8, 10]
+    ]
+  },
+
+  Wednesday: {
+    focus: "Recovery",
+    exercises: []
+  },
+
+  Thursday: {
+    focus: "Back + Biceps + Shoulders",
+    exercises: [
+      ["One-arm DB Row", "horizontal pull", 3, 10, 15],
+      ["DB Biceps Curl", "biceps", 3, 10, 15],
+      ["Hammer Curl", "arms", 2, 10, 15],
+      ["DB Lateral Raise", "side delts", 2, 12, 20],
+      ["Rear-delt Fly", "rear delts", 2, 12, 20]
+    ]
+  },
+
+  Friday: {
+    focus: "Full Body + Arms",
+    exercises: [
+      ["DB Chest Press", "horizontal push", 2, 8, 15],
+      ["One-arm DB Row", "horizontal pull", 2, 10, 15],
+      ["Goblet Squat", "squat", 2, 10, 15],
+      ["DB RDL", "hinge", 2, 10, 15],
+      ["DB Lateral Raise", "side delts", 3, 12, 20],
+      ["DB Biceps Curl", "biceps", 2, 10, 15],
+      ["Overhead DB Triceps Extension", "triceps", 2, 10, 15],
+      ["Farmer Carry", "carry", 3, 8, 10]
+    ]
+  },
+
+  Saturday: {
+    focus: "Walk / Easy Cardio",
+    exercises: []
+  },
+
+  Sunday: {
+    focus: "Rest",
+    exercises: []
+  }
+};
 const state = loadState();
 const settings = loadSettings();
 
