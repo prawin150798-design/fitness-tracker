@@ -56,3 +56,13 @@ The plan emphasizes functional patterns rather than bodybuilding volume:
 - Anti-rotation/core
 
 Progression uses previous weight, reps and RIR as guidance rather than forcing maximal loads.
+
+
+## Updated weekly workout plan
+
+The weekly plan is defined in `index.html` in the `const PLAN` object. Each exercise entry uses:
+`[exercise name, movement/focus note, number of sets, minimum reps, maximum reps, rest seconds]`.
+
+The Workout screen displays the rest target. For carries and planks, the target range is seconds or steps as described in the movement note; enter the count in the reps field. The app stores prior workouts by exercise name, so keep names unchanged when you want suggestions to reuse that exercise's history.
+
+After replacing files on a hosted PWA, refresh the page. The service-worker cache version is bumped to `fitness-tracker-v6` so the new app shell can be installed.
