@@ -1,46 +1,79 @@
-const CACHE = "fitness-tracker-v6";
-const APP_SHELL = ["./","./index.html","./manifest.json","./icon-192.png","./icon-512.png"];
+
+const CACHE = "fitness-tracker-v7";
+const APP_SHELL = [
+  "./",
+  "./index.html",
+  "./manifest.json",
+  "./icon-192.png",
+  "./icon-512.png"
+];
 
 self.addEventListener("install", event => {
-  event.waitUntil(caches.open(CACHE).then(c => c.addAll(APP_SHELL)).then(() => self.skipWaiting()));
+  event.waitUntil(
+    caches.open(CACHE)
+      .then(cache => cache.addAll(APP_SHELL))
+      .then(() => self.skipWaiting())
+  );
 });
 
 self.addEventListener("activate", event => {
   event.waitUntil(
     caches.keys()
-      .then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))
+      .then(keys =>
+        Promise.all(
+          keys
+            .filter(key => key !== CACHE)
+            .map(key => caches.delete(key))
+        )
+      )
       .then(() => self.clients.claim())
   );
 });
 
 self.addEventListener("fetch", event => {
-  const req = event.request;
-  if (req.method !== "GET") return;
-  const url = new URL(req.url);
+  const request = event.request;
+
+  if (request.method !== "GET") return;
+
+  const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
 
-  const isHTML = req.mode === "navigate" || req.destination === "document" ||
-                 url.pathname.endsWith(".html") || url.pathname === "/" || url.pathname.endsWith("/");
+  const isHTML =
+    request.mode === "navigate" ||
+    request.destination === "document" ||
+    url.pathname.endsWith(".html") ||
+    url.pathname === "/" ||
+    url.pathname.endsWith("/");
 
   if (isHTML) {
     event.respondWith(
-      fetch(req, {cache:"no-store"})
-        .then(res => {
-          const copy = res.clone();
-          caches.open(CACHE).then(c => c.put(req, copy));
-          return res;
+      fetch(request, { cache: "no-store" })
+        .then(response => {
+          const copy = response.clone();
+          caches.open(CACHE).then(cache =>
+            cache.put(request, copy)
+          );
+          return response;
         })
-        .catch(() => caches.match(req).then(r => r || caches.match("./index.html")))
+        .catch(() =>
+          caches.match(request).then(
+            cached => cached || caches.match("./index.html")
+          )
+        )
     );
   } else {
     event.respondWith(
-      caches.match(req).then(cached => cached || fetch(req).then(res => {
-        if (res && res.ok) {
-          const copy = res.clone();
-          caches.open(CACHE).then(c => c.put(req, copy));
-        }
-        return res;
-      }))
+      caches.match(request).then(cached =>
+        cached || fetch(request).then(response => {
+          if (response && response.ok) {
+            const copy = response.clone();
+            caches.open(CACHE).then(cache =>
+              cache.put(request, copy)
+            );
+          }
+          return response;
+        })
+      )
     );
   }
 });
