@@ -1,4 +1,3 @@
-
 const CACHE = "fitness-tracker-v7";
 const APP_SHELL = [
   "./",
