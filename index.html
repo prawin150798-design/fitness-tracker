@@ -184,58 +184,56 @@ footer{max-width:1120px;margin:20px auto;color:var(--muted);font-size:11px;paddi
 const DEFAULT_URL = "https://script.google.com/macros/s/AKfycbxgI9Sj-9u2SLYdyU2s-vuZeK1ruaVh-Sbc0wLyuSqEC_TiVOQKuf7p6HfcNdppZwlafw/exec";
 const KEY = "fitnessTrackerV3";
 const SETTINGS_KEY = "fitnessTrackerV3Settings";
-
-
 const PLAN = {
   Monday: {
-    focus: "Upper A — Chest + Back + Arms",
+    focus: "Upper A — Chest + Back + Arms (controlled tempo)",
     exercises: [
-      ["DB Floor Press", "horizontal push · chest/triceps · no bench needed", 3, 8, 15, 120],
-      ["One-arm DB Row", "horizontal pull · each side", 3, 10, 15, 90],
-      ["DB Shoulder Press", "vertical push · shoulders/triceps", 2, 8, 12, 120],
-      ["Push-ups", "bodyweight push · chest/triceps", 2, 6, 12, 90],
-      ["Hammer Curl", "biceps/forearms", 2, 10, 15, 60],
-      ["Overhead DB Triceps Extension", "triceps", 2, 10, 15, 60]
+      ["DB Floor Press — 3-sec Lower + Pause", "chest/triceps · lower for 3 seconds, pause gently with upper arms on floor, press up without bouncing", 3, 8, 12, 120],
+      ["One-arm DB Row — Pause + Slow Lower", "back/biceps · squeeze at top for 1 second, lower for 3 seconds · each side", 3, 10, 15, 90],
+      ["DB Shoulder Press", "shoulders/triceps · strict reps, no leg drive", 2, 8, 12, 120],
+      ["Push-ups — Slow Lower", "chest/triceps · lower for 3 seconds, stop before form breaks", 2, 6, 12, 90],
+      ["Hammer Curl", "biceps/forearms · no swinging, lower for 2–3 seconds", 2, 10, 15, 60],
+      ["Overhead DB Triceps Extension", "triceps · controlled range, keep elbows comfortable", 2, 10, 15, 60]
     ]
   },
 
   Tuesday: {
     focus: "Lower Body + Functional Core",
     exercises: [
-      ["Goblet Squat", "squat · legs/glutes", 3, 8, 15, 120],
-      ["DB RDL", "hinge · hamstrings/glutes", 3, 8, 15, 120],
-      ["Glute Bridge", "hip extension · glutes", 2, 12, 20, 60],
-      ["Dead Bug", "core control · reps per side", 2, 8, 12, 45],
-      ["Suitcase Carry", "carry · seconds per side", 2, 20, 40, 60]
+      ["Goblet Squat — 3-sec Lower", "quads/glutes · lower for 3 seconds, stay balanced and use a comfortable depth", 3, 8, 15, 120],
+      ["DB RDL — 3-sec Lower", "hamstrings/glutes · push hips back, lower for 3 seconds, keep back neutral", 3, 10, 15, 120],
+      ["Glute Bridge", "hip extension · squeeze glutes briefly at the top", 2, 12, 20, 60],
+      ["Dead Bug", "core control · reps per side, keep lower back controlled", 2, 8, 12, 45],
+      ["Suitcase Carry", "carry · seconds per side, stay tall without leaning", 2, 20, 40, 60]
     ]
   },
 
   Wednesday: {
-    focus: "Rest + Recovery",
+    focus: "Active Recovery — 20–30 min easy walk + 5–10 min gentle mobility",
     exercises: []
   },
 
   Thursday: {
     focus: "Upper B — Back + Chest + Shoulders",
     exercises: [
-      ["One-arm DB Row", "horizontal pull · each side", 3, 10, 15, 90],
-      ["DB Floor Press", "horizontal push · chest/triceps", 3, 8, 15, 120],
-      ["DB Pullover", "chest/lats · one dumbbell", 2, 10, 15, 75],
-      ["Standing Single-arm DB Press", "vertical push · each side", 2, 8, 12, 90],
-      ["Rear-delt Fly", "rear shoulders/upper back", 2, 12, 20, 60],
-      ["DB Biceps Curl", "biceps", 2, 10, 15, 60]
+      ["One-arm DB Row — Pause + Slow Lower", "back/biceps · squeeze at top for 1 second, lower for 3 seconds · each side", 3, 10, 15, 90],
+      ["Single-arm DB Floor Press", "chest/triceps + core · one side at a time, resist torso rotation · each side", 3, 8, 12, 120],
+      ["DB Pullover", "chest/lats · use a comfortable shoulder range and keep ribs controlled", 2, 10, 15, 75],
+      ["Standing Single-arm DB Press", "shoulders/triceps · each side, avoid leaning", 2, 8, 12, 90],
+      ["Rear-delt Fly", "rear shoulders/upper back · light, controlled reps", 2, 12, 20, 60],
+      ["DB Biceps Curl", "biceps · strict reps, lower for 2–3 seconds", 2, 10, 15, 60]
     ]
   },
 
   Friday: {
     focus: "Full Body + Functional Strength",
     exercises: [
-      ["Goblet Squat", "squat · legs/glutes", 2, 10, 15, 90],
-      ["DB RDL", "hinge · hamstrings/glutes", 2, 10, 15, 90],
-      ["DB Floor Press", "horizontal push · chest/triceps · no bench needed", 2, 8, 15, 90],
-      ["One-arm DB Row", "horizontal pull · each side", 2, 10, 15, 75],
-      ["Farmer Carry", "carry · 10 steps = 1 rep", 3, 8, 10, 60],
-      ["Plank", "core · seconds", 2, 30, 60, 45]
+      ["Split Squat (supported if needed)", "quads/glutes · each leg, use a comfortable range and hold a stable support if balance is difficult", 2, 8, 12, 90],
+      ["Staggered-stance DB RDL", "hamstrings/glutes · stagger feet, most weight through front leg, hinge with control · each side", 2, 8, 12, 90],
+      ["DB Floor Press — 3-sec Lower + Pause", "chest/triceps · lower for 3 seconds, pause gently with upper arms on floor", 2, 8, 12, 90],
+      ["One-arm DB Row — Pause + Slow Lower", "back/biceps · squeeze at top for 1 second, lower for 3 seconds · each side", 2, 10, 15, 75],
+      ["Farmer Carry", "carry · seconds, walk tall with controlled steps", 3, 30, 80, 60],
+      ["Plank", "core · seconds, keep hips level", 2, 30, 60, 45]
     ]
   },
 
