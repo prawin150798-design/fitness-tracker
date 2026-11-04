@@ -186,25 +186,26 @@ const KEY = "fitnessTrackerV3";
 const SETTINGS_KEY = "fitnessTrackerV3Settings";
 const PLAN = {
   Monday: {
-    focus: "Upper A — Chest + Back + Arms (controlled tempo)",
+    focus: "Upper A — Push (heavy single-arm + tempo)",
     exercises: [
-      ["DB Floor Press — 3-sec Lower + Pause", "chest/triceps · lower for 3 seconds, pause gently with upper arms on floor, press up without bouncing", 3, 8, 12, 120],
-      ["One-arm DB Row — Pause + Slow Lower", "back/biceps · squeeze at top for 1 second, lower for 3 seconds · each side", 3, 10, 15, 90],
-      ["DB Shoulder Press", "shoulders/triceps · strict reps, no leg drive", 2, 8, 12, 120],
-      ["Push-ups — Slow Lower", "chest/triceps · lower for 3 seconds, stop before form breaks", 2, 6, 12, 90],
-      ["Hammer Curl", "biceps/forearms · no swinging, lower for 2–3 seconds", 2, 10, 15, 60],
-      ["Overhead DB Triceps Extension", "triceps · controlled range, keep elbows comfortable", 2, 10, 15, 60]
+      ["Push-ups — Backpack, 4-sec Lower", "chest/triceps · add a loaded backpack, lower for 4 seconds, stop 1 rep before failure · feet elevated once you reach 12 clean reps", 3, 8, 12, 90],
+      ["Single-arm DB Floor Press — 4-sec Lower + Pause", "chest/triceps + core · 12 kg, each side, pause with upper arm on the floor, resist torso rotation", 3, 8, 12, 90],
+      ["DB Shoulder Press — 3-sec Lower", "shoulders/triceps · 10 kg per hand, strict · make the last set rest-pause (15 sec rest, then extra reps)", 3, 8, 12, 90],
+      ["DB Lateral Raise — Drop Set", "side delts · 5 kg, controlled · on the last set, drop to lighter weight or partials after failure", 3, 15, 20, 60],
+      ["Two-hand Overhead Triceps Extension", "triceps · one 12 kg DB held with both hands, controlled range", 3, 10, 15, 60],
+      ["Hammer Curl — 4-sec Lower", "biceps/forearms · 10 kg, no swinging, lower for 4 seconds", 3, 8, 12, 60]
     ]
   },
 
   Tuesday: {
-    focus: "Lower Body + Functional Core",
+    focus: "Lower Body + Core (ankle-friendly)",
     exercises: [
-      ["Goblet Squat — 3-sec Lower", "quads/glutes · lower for 3 seconds, stay balanced and use a comfortable depth", 3, 8, 15, 120],
-      ["DB RDL — 3-sec Lower", "hamstrings/glutes · push hips back, lower for 3 seconds, keep back neutral", 3, 10, 15, 120],
-      ["Glute Bridge", "hip extension · squeeze glutes briefly at the top", 2, 12, 20, 60],
-      ["Dead Bug", "core control · reps per side, keep lower back controlled", 2, 8, 12, 45],
-      ["Suitcase Carry", "carry · seconds per side, stay tall without leaning", 2, 20, 40, 60]
+      ["Goblet Squat — Both DBs", "quads/glutes · hold both dumbbells (~20 kg) or a loaded backpack at chest, lower 3 sec, pause 2 sec at the bottom", 3, 8, 12, 120],
+      ["Single-leg RDL", "hamstrings/glutes · 10–12 kg, each side, hinge with control, use light support for balance", 3, 8, 10, 90],
+      ["Hip Thrust — DBs on Lap", "glutes · both DBs on your lap, pause 1 sec at the top · progress to single-leg", 3, 10, 15, 90],
+      ["Bulgarian Split Squat (supported split squat if ankle objects)", "quads/glutes · each leg, 10 kg per hand, rear foot on a chair", 3, 8, 10, 90],
+      ["Single-leg Calf Raise", "calves · each side, full range, slow lower", 3, 15, 20, 45],
+      ["Suitcase Carry", "carry · seconds per side, 12 kg, stay tall without leaning", 3, 40, 60, 60]
     ]
   },
 
@@ -214,26 +215,25 @@ const PLAN = {
   },
 
   Thursday: {
-    focus: "Upper B — Back + Chest + Shoulders",
+    focus: "Upper B — Pull + Shoulders",
     exercises: [
-      ["One-arm DB Row — Pause + Slow Lower", "back/biceps · squeeze at top for 1 second, lower for 3 seconds · each side", 3, 10, 15, 90],
-      ["Single-arm DB Floor Press", "chest/triceps + core · one side at a time, resist torso rotation · each side", 3, 8, 12, 120],
-      ["DB Pullover", "chest/lats · use a comfortable shoulder range and keep ribs controlled", 2, 10, 15, 75],
-      ["Standing Single-arm DB Press", "shoulders/triceps · each side, avoid leaning", 2, 8, 12, 90],
-      ["Rear-delt Fly", "rear shoulders/upper back · light, controlled reps", 2, 12, 20, 60],
-      ["DB Biceps Curl", "biceps · strict reps, lower for 2–3 seconds", 2, 10, 15, 60]
+      ["One-arm DB Row — Pause + Slow Lower", "back/biceps · true single-arm with 12 kg, squeeze at top for 1 second, lower for 3 seconds · each side", 3, 8, 12, 90],
+      ["Renegade Row", "back/core · 8–10 kg, hold a plank, row without rotating hips · each side", 3, 6, 8, 90],
+      ["DB Pullover", "chest/lats · one 12 kg DB held with both hands, comfortable shoulder range", 3, 10, 12, 75],
+      ["Pike Push-up", "shoulders/triceps · hips high, head moves between the hands", 3, 6, 10, 90],
+      ["Rear-delt Fly", "rear shoulders/upper back · 3 kg, lower for 4 seconds", 3, 15, 20, 60],
+      ["Concentration Curl", "biceps · 10–12 kg, each side, strict reps", 3, 8, 12, 60]
     ]
   },
 
   Friday: {
-    focus: "Full Body + Functional Strength",
+    focus: "Full Body + Conditioning",
     exercises: [
-      ["Split Squat (supported if needed)", "quads/glutes · each leg, use a comfortable range and hold a stable support if balance is difficult", 2, 8, 12, 90],
-      ["Staggered-stance DB RDL", "hamstrings/glutes · stagger feet, most weight through front leg, hinge with control · each side", 2, 8, 12, 90],
-      ["DB Floor Press — 3-sec Lower + Pause", "chest/triceps · lower for 3 seconds, pause gently with upper arms on floor", 2, 8, 12, 90],
-      ["One-arm DB Row — Pause + Slow Lower", "back/biceps · squeeze at top for 1 second, lower for 3 seconds · each side", 2, 10, 15, 75],
-      ["Farmer Carry", "carry · seconds, walk tall with controlled steps", 3, 30, 80, 60],
-      ["Plank", "core · seconds, keep hips level", 2, 30, 60, 45]
+      ["DB Complex (RDL → Row → Squat → Press)", "full body · 8–10 kg per hand, 5 reps of each movement with no rest in between = 1 round · log the number of rounds as sets", 4, 5, 8, 90],
+      ["Push-ups — Slow Lower", "chest/triceps · circuit with the next two exercises, lower for 3 seconds", 3, 8, 12, 60],
+      ["Goblet Squat — Both DBs", "quads/glutes · both dumbbells at chest, controlled tempo", 3, 8, 12, 60],
+      ["One-arm DB Row — Pause + Slow Lower", "back/biceps · 12 kg, each side, finish the circuit then rest", 3, 8, 12, 90],
+      ["Suitcase Carry", "carry · seconds per side, finish with a long heavy carry or a loaded-backpack walk", 2, 60, 90, 60]
     ]
   },
 
