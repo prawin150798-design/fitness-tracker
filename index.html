@@ -41,3 +41,804 @@ footer{max-width:1120px;margin:20px auto;color:var(--muted);font-size:11px;paddi
 #restBar.on{display:block}#restBar.done{background:#15803d}
 .restin{max-width:1120px;margin:auto;display:flex;align-items:center;gap:10px;justify-content:space-between;flex-wrap:wrap}
 #restTime{font-size:30px;font-weight:800;font-variant-numeric:tabular-nums;min-width:90px}#restLabel{font-size:12px;opacity:.8}
+.restbtns{display:flex;gap:8px}.restbtns button{background:rgba(255,255,255,.14);color:#fff;padding:9px 12px}
+#restProg{height:4px;background:rgba(255,255,255,.2);border-radius:4px;margin-top:10px;max-width:1120px;margin-left:auto;margin-right:auto;overflow:hidden}#restFill{height:100%;width:100%;background:#60a5fa;transition:width .25s linear}
+@media(max-width:760px){.g2,.g3,.g4,.row,.row3{grid-template-columns:1fr}.head{align-items:flex-start}.setrow{grid-template-columns:28px 1fr 1fr 1fr 34px 34px;gap:5px}.wrap{padding:12px}.card{padding:13px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="head">
+    <div><div class="brand">Fitness Tracker</div><div class="sub">Adaptive training · body composition · habits</div></div>
+    <div class="status"><span id="statusDot" class="dot"></span><span id="statusText">Local</span></div>
+  </div>
+  <div class="wrap" style="padding-top:0;padding-bottom:10px">
+    <nav id="nav"></nav>
+  </div>
+</header>
+
+<main class="wrap">
+<section id="dashboard" class="active">
+  <div class="section-head"><div><h1>Dashboard</h1><div class="muted">Track the signals that matter most: weight, waist, consistency and performance.</div></div><button class="btn" onclick="syncAll()">Sync Sheets</button></div>
+  <div id="dashboardNotice"></div>
+  <div class="grid g4" id="kpis"></div>
+  <div class="grid g2" style="margin-top:14px">
+    <div class="card"><h2>Weight trend</h2><div class="chartbox"><canvas id="weightChart"></canvas></div></div>
+    <div class="card"><h2>Waist trend</h2><div class="chartbox"><canvas id="waistChart"></canvas></div></div>
+  </div>
+  <div class="grid g2" style="margin-top:14px">
+    <div class="card"><h2>Today's plan</h2><div id="todayPlan"></div></div>
+    <div class="card"><h2>Recovery</h2><div id="recovery"></div></div>
+  </div>
+</section>
+
+<section id="workout">
+  <div class="section-head"><div><h1>Workout</h1><div class="muted">Use the last completed session to guide today's load and reps.</div></div><button class="btn secondary" onclick="resetWorkout()">Reset session</button></div>
+  <div class="card">
+    <div class="row">
+      <div><label>Date</label><input id="woDate" type="date"></div>
+      <div><label>Day</label><select id="woDay" onchange="renderWorkoutForm()"></select></div>
+    </div>
+  </div>
+  <div class="card" style="margin-top:12px">
+    <h3>Rest timer</h3>
+    <div class="muted small">Tap ⏱ next to a set to start that exercise's rest time, or pick a preset.</div>
+    <div class="presets">
+      <button class="btn secondary" onclick="startRest(30)">30s</button>
+      <button class="btn secondary" onclick="startRest(45)">45s</button>
+      <button class="btn secondary" onclick="startRest(60)">60s</button>
+      <button class="btn secondary" onclick="startRest(90)">90s</button>
+      <button class="btn secondary" onclick="startRest(120)">2 min</button>
+    </div>
+  </div>
+  <div id="workoutAutosaveStatus" class="small muted" style="margin-top:10px">Autosave ready</div>
+  <div id="workoutForm" style="margin-top:12px"></div>
+  <div class="right" style="margin-top:12px"><button class="btn" onclick="saveWorkoutSession()">Save workout</button></div>
+</section>
+
+<section id="body">
+  <div class="section-head"><div><h1>Body</h1><div class="muted">Log weight and measurements consistently, ideally under similar conditions.</div></div></div>
+  <div class="grid g2">
+    <div class="card">
+      <h2>Weight</h2>
+      <form class="form" onsubmit="event.preventDefault();saveWeightForm()">
+        <div class="row"><div><label>Date</label><input id="bwDate" type="date"></div><div><label>Weight (kg)</label><input id="bwWeight" type="number" step="0.1" required></div></div>
+        <div><div><label>7-day average (optional)</label><input id="bwAvg" type="number" step="0.1"></div></div>
+        <div><label>Notes</label><textarea id="bwNotes"></textarea></div>
+        <button class="btn">Save weight</button>
+      </form>
+    </div>
+    <div class="card">
+      <h2>Measurements</h2>
+      <form class="form" onsubmit="event.preventDefault();saveMeasurementForm()">
+        <div><label>Date</label><input id="mDate" type="date"></div>
+        <div class="row3">
+          <div><label>Waist (in)</label><input id="mWaist" type="number" step="0.1"></div>
+          <div><label>Narrow waist (in)</label><input id="mNarrow" type="number" step="0.1"></div>
+          <div><label>Neck (in)</label><input id="mNeck" type="number" step="0.1"></div>
+        </div>
+        <div class="row3">
+          <div><label>Chest (in)</label><input id="mChest" type="number" step="0.1"></div>
+          <div><label>Arm (in)</label><input id="mArm" type="number" step="0.1"></div>
+          <div><label>Thigh (in)</label><input id="mThigh" type="number" step="0.1"></div>
+        </div>
+        <button class="btn">Save measurements</button>
+      </form>
+    </div>
+  </div>
+  <div class="card" style="margin-top:14px"><h2>Recent body data</h2><div id="bodyTable"></div></div>
+</section>
+
+<section id="habits">
+  <div class="section-head"><div><h1>Habits</h1><div class="muted">Keep recovery and daily movement visible without turning it into a complicated system.</div></div></div>
+  <div class="card">
+    <form class="form" onsubmit="event.preventDefault();saveHabitForm()">
+      <div class="row3">
+        <div><label>Date</label><input id="hDate" type="date"></div>
+        <div><label>Steps</label><input id="hSteps" type="number" min="0"></div>
+        <div><label>Sleep (hours)</label><input id="hSleep" type="number" step="0.1" min="0" max="24"></div>
+      </div>
+      <div class="row3">
+        <div><label>Water (L)</label><input id="hWater" type="number" step="0.1" min="0"></div>
+        <div><label>Cardio / walk</label><input id="hCardio" placeholder="e.g. 30 min walk"></div>
+        <div><label>Mood</label><select id="hMood"><option value="">—</option><option>Low</option><option>Okay</option><option>Good</option><option>Great</option></select></div>
+      </div>
+      <div class="row"><div><label>Energy</label><select id="hEnergy"><option value="">—</option><option>Low</option><option>Okay</option><option>Good</option><option>High</option></select></div><div><label>Notes</label><input id="hNotes"></div></div>
+      <button class="btn">Save habit entry</button>
+    </form>
+  </div>
+  <div class="card" style="margin-top:14px"><h2>Recent habits</h2><div id="habitTable"></div></div>
+</section>
+
+<section id="food">
+  <div class="section-head"><div><h1>Food</h1><div class="muted">Simple logging for protein and calorie awareness.</div></div></div>
+  <div class="card">
+    <form class="form" onsubmit="event.preventDefault();saveFoodForm()">
+      <div class="row3">
+        <div><label>Date</label><input id="fDate" type="date"></div>
+        <div><label>Meal</label><select id="fMeal"><option>Breakfast</option><option>Lunch</option><option>Snack</option><option>Dinner</option><option>Other</option></select></div>
+        <div><label>Food</label><input id="fFood" required placeholder="Food / dish"></div>
+      </div>
+      <div class="row3">
+        <div><label>Quantity</label><input id="fQty" placeholder="e.g. 150 g"></div>
+        <div><label>Protein (g)</label><input id="fProtein" type="number" step="0.1"></div>
+        <div><label>Calories</label><input id="fCalories" type="number" step="1"></div>
+      </div>
+      <div><label>Notes</label><input id="fNotes"></div>
+      <button class="btn">Save food</button>
+    </form>
+  </div>
+  <div class="card" style="margin-top:14px"><h2>Recent food</h2><div id="foodTable"></div></div>
+</section>
+
+<section id="history">
+  <div class="section-head"><div><h1>History</h1><div class="muted">Everything currently stored on this device and synced from Sheets.</div></div><div class="actions"><button class="btn secondary" onclick="exportJSON()">Export JSON</button><button class="btn secondary" onclick="importJSON()">Import JSON</button></div></div>
+  <div class="grid g3">
+    <div class="card"><div class="muted small">Workout rows</div><div class="big" id="countWorkouts">0</div></div>
+    <div class="card"><div class="muted small">Weight entries</div><div class="big" id="countWeights">0</div></div>
+    <div class="card"><div class="muted small">Habit entries</div><div class="big" id="countHabits">0</div></div>
+  </div>
+  <div class="card" style="margin-top:14px"><h2>Recent workouts</h2><div id="historyTable"></div></div>
+</section>
+
+<section id="settings">
+  <div class="section-head"><div><h1>Settings</h1><div class="muted">Google Sheets connection and local data controls.</div></div></div>
+  <div class="card">
+    <h2>Google Apps Script Web App</h2>
+    <p class="muted small">This is the endpoint from your existing deployment. If you redeploy the script with a new URL, replace it here.</p>
+    <input id="sheetUrl" type="url">
+    <div class="actions" style="margin-top:10px"><button class="btn" onclick="saveSettings()">Save URL</button><button class="btn secondary" onclick="testConnection()">Test connection</button><button class="btn secondary" onclick="syncAll()">Sync now</button></div>
+    <div id="settingsResult" style="margin-top:10px"></div>
+  </div>
+  <div class="card" style="margin-top:14px">
+    <h2>Local data</h2>
+    <p class="muted small">Local storage is used as the offline cache. Clearing it does not delete Google Sheets data.</p>
+    <div class="actions"><button class="btn danger" onclick="clearLocal()">Clear local cache</button><button class="btn secondary" onclick="exportJSON()">Export backup</button></div>
+  </div>
+</section>
+</main>
+<footer>Fitness Tracker v4 · Google Sheets is the long-term database; this browser keeps an offline cache.</footer>
+
+<div id="restBar">
+  <div class="restin">
+    <div><div id="restLabel">Rest</div><div id="restTime">0:00</div></div>
+    <div class="restbtns">
+      <button onclick="adjustRest(-15)">−15s</button>
+      <button onclick="adjustRest(15)">+15s</button>
+      <button onclick="stopRest()">Skip</button>
+    </div>
+  </div>
+  <div id="restProg"><div id="restFill"></div></div>
+</div>
+
+<script>
+const DEFAULT_URL = "https://script.google.com/macros/s/AKfycbxgI9Sj-9u2SLYdyU2s-vuZeK1ruaVh-Sbc0wLyuSqEC_TiVOQKuf7p6HfcNdppZwlafw/exec";
+const KEY = "fitnessTrackerV3";
+const SETTINGS_KEY = "fitnessTrackerV3Settings";
+const PLAN = {
+  Monday: {
+    focus: "Upper A — Push (heavy single-arm + tempo)",
+    exercises: [
+      ["Push-ups — Backpack, 4-sec Lower", "chest/triceps · add a loaded backpack, lower for 4 seconds, stop 1 rep before failure · feet elevated once you reach 12 clean reps", 3, 8, 12, 90],
+      ["Single-arm DB Floor Press — 4-sec Lower + Pause", "chest/triceps + core · 12 kg, each side, pause with upper arm on the floor, resist torso rotation", 3, 8, 12, 90],
+      ["DB Shoulder Press — 3-sec Lower", "shoulders/triceps · 10 kg per hand, strict · make the last set rest-pause (15 sec rest, then extra reps)", 3, 8, 12, 90],
+      ["DB Lateral Raise — Drop Set", "side delts · 5 kg, controlled · on the last set, drop to lighter weight or partials after failure", 3, 15, 20, 60],
+      ["Two-hand Overhead Triceps Extension", "triceps · one 12 kg DB held with both hands, controlled range", 3, 10, 15, 60],
+      ["Hammer Curl — 4-sec Lower", "biceps/forearms · 10 kg, no swinging, lower for 4 seconds", 3, 8, 12, 60]
+    ]
+  },
+
+  Tuesday: {
+    focus: "Lower Body + Core (ankle-friendly)",
+    exercises: [
+      ["Goblet Squat — Both DBs", "quads/glutes · hold both dumbbells (~20 kg) or a loaded backpack at chest, lower 3 sec, pause 2 sec at the bottom", 3, 8, 12, 120],
+      ["Single-leg RDL", "hamstrings/glutes · 10–12 kg, each side, hinge with control, use light support for balance", 3, 8, 10, 90],
+      ["Hip Thrust — DBs on Lap", "glutes · both DBs on your lap, pause 1 sec at the top · progress to single-leg", 3, 10, 15, 90],
+      ["Bulgarian Split Squat (supported split squat if ankle objects)", "quads/glutes · each leg, 10 kg per hand, rear foot on a chair", 3, 8, 10, 90],
+      ["Single-leg Calf Raise", "calves · each side, full range, slow lower", 3, 15, 20, 45],
+      ["Suitcase Carry", "carry · seconds per side, 12 kg, stay tall without leaning", 3, 40, 60, 60],
+      ["Dead Bug", "core finisher · reps per side, slow and controlled, keep lower back pressed down", 3, 8, 12, 45],
+      ["Side Plank", "obliques/waist · seconds per side, hips stacked and lifted", 2, 30, 45, 45]
+    ]
+  },
+
+  Wednesday: {
+    focus: "Active Recovery — 20–30 min easy walk + 5–10 min gentle mobility",
+    exercises: []
+  },
+
+  Thursday: {
+    focus: "Upper B — Pull + Shoulders",
+    exercises: [
+      ["One-arm DB Row — Pause + Slow Lower", "back/biceps · true single-arm with 12 kg, squeeze at top for 1 second, lower for 3 seconds · each side", 3, 8, 12, 90],
+      ["Renegade Row", "back/core · 8–10 kg, hold a plank, row without rotating hips · each side", 3, 6, 8, 90],
+      ["DB Pullover", "chest/lats · one 12 kg DB held with both hands, comfortable shoulder range", 3, 10, 12, 75],
+      ["Pike Push-up", "shoulders/triceps · hips high, head moves between the hands", 3, 6, 10, 90],
+      ["Rear-delt Fly", "rear shoulders/upper back · 3 kg, lower for 4 seconds", 3, 15, 20, 60],
+      ["Concentration Curl", "biceps · 10–12 kg, each side, strict reps", 3, 8, 12, 60],
+      ["Side Plank", "obliques/waist · seconds per side, hips stacked and lifted", 3, 30, 45, 45]
+    ]
+  },
+
+  Friday: {
+    focus: "Full Body + Conditioning",
+    exercises: [
+      ["DB Complex (RDL → Row → Squat → Press)", "full body · 8–10 kg per hand, 5 reps of each movement with no rest in between = 1 round · log the number of rounds as sets", 4, 5, 8, 90],
+      ["Push-ups — Slow Lower", "chest/triceps · circuit with the next two exercises, lower for 3 seconds", 3, 8, 12, 60],
+      ["Goblet Squat — Both DBs", "quads/glutes · both dumbbells at chest, controlled tempo", 3, 8, 12, 60],
+      ["One-arm DB Row — Pause + Slow Lower", "back/biceps · 12 kg, each side, finish the circuit then rest", 3, 8, 12, 90],
+      ["Suitcase Carry", "carry · seconds per side, finish with a long heavy carry or a loaded-backpack walk", 2, 60, 90, 60]
+    ]
+  },
+
+  Saturday: {
+    focus: "Walk / Easy Cardio",
+    exercises: []
+  },
+
+  Sunday: {
+    focus: "Rest",
+    exercises: []
+  }
+};
+const state = loadState();
+const settings = loadSettings();
+
+function loadState(){
+  const blank={weights:[],measurements:[],workouts:[],habits:[],food:[],drafts:{}};
+  try{return {...blank,...JSON.parse(localStorage.getItem(KEY)||"{}")}}catch(e){return blank}
+}
+function saveState(){localStorage.setItem(KEY,JSON.stringify(state))}
+function loadSettings(){try{return {...{sheetUrl:DEFAULT_URL},...JSON.parse(localStorage.getItem(SETTINGS_KEY)||"{}")}}catch(e){return {sheetUrl:DEFAULT_URL}}}
+function today(){return new Date().toISOString().slice(0,10)}
+function esc(v){return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
+function num(v){const n=Number(v);return Number.isFinite(n)?n:null}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,8)}
+function setStatus(text,kind=""){document.getElementById("statusText").textContent=text;document.getElementById("statusDot").className="dot "+kind}
+
+/* ---------- Rest timer ---------- */
+let restEnd=0,restTotal=0,restInterval=null,restHideTimeout=null,audioCtx=null;
+function fmtTime(s){return Math.floor(s/60)+":"+String(s%60).padStart(2,"0")}
+function unlockAudio(){
+  try{
+    if(!audioCtx)audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+    if(audioCtx.state==="suspended")audioCtx.resume();
+  }catch(e){}
+}
+function beep(){
+  try{
+    unlockAudio();
+    if(!audioCtx)return;
+    [0,0.25,0.5].forEach(t=>{
+      const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+      o.frequency.value=880;o.connect(g);g.connect(audioCtx.destination);
+      const s=audioCtx.currentTime+t;
+      g.gain.setValueAtTime(0.0001,s);g.gain.exponentialRampToValueAtTime(0.3,s+0.02);g.gain.exponentialRampToValueAtTime(0.0001,s+0.18);
+      o.start(s);o.stop(s+0.2);
+    });
+  }catch(e){}
+  try{if(navigator.vibrate)navigator.vibrate([200,100,200,100,200])}catch(e){}
+}
+function startRest(sec){
+  sec=Number(sec)||60;
+  unlockAudio();
+  clearTimeout(restHideTimeout);
+  restTotal=sec;restEnd=Date.now()+sec*1000;
+  const bar=document.getElementById("restBar");
+  bar.classList.add("on");bar.classList.remove("done");
+  document.getElementById("restLabel").textContent="Rest";
+  clearInterval(restInterval);
+  restInterval=setInterval(tickRest,250);
+  tickRest();
+}
+function tickRest(){
+  if(!restEnd)return;
+  const left=Math.max(0,Math.ceil((restEnd-Date.now())/1000));
+  document.getElementById("restTime").textContent=fmtTime(left);
+  document.getElementById("restFill").style.width=(restTotal>0?Math.min(100,left/restTotal*100):0)+"%";
+  if(left<=0)finishRest();
+}
+function adjustRest(delta){
+  if(!restEnd)return;
+  restEnd+=delta*1000;restTotal=Math.max(1,restTotal+delta);
+  tickRest();
+}
+function finishRest(){
+  clearInterval(restInterval);restInterval=null;restEnd=0;
+  const bar=document.getElementById("restBar");
+  bar.classList.add("done");
+  document.getElementById("restLabel").textContent="Rest over";
+  document.getElementById("restTime").textContent="Go!";
+  document.getElementById("restFill").style.width="0%";
+  beep();
+  restHideTimeout=setTimeout(()=>bar.classList.remove("on","done"),5000);
+}
+function stopRest(){
+  clearInterval(restInterval);restInterval=null;restEnd=0;
+  clearTimeout(restHideTimeout);
+  document.getElementById("restBar").classList.remove("on","done");
+}
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)tickRest()});
+
+const tabs=[["dashboard","Dashboard"],["workout","Workout"],["body","Body"],["habits","Habits"],["food","Food"],["history","History"],["settings","Settings"]];
+document.getElementById("nav").innerHTML=tabs.map(([id,label])=>`<button class="tab ${id==="dashboard"?"active":""}" data-tab="${id}">${label}</button>`).join("");
+document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
+function showTab(id){
+  document.querySelectorAll("section").forEach(s=>s.classList.toggle("active",s.id===id));
+  document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===id));
+  if(id==="dashboard")renderDashboard();
+  if(id==="workout")initWorkout();
+  if(id==="body")renderBody();
+  if(id==="habits")renderHabits();
+  if(id==="food")renderFood();
+  if(id==="history")renderHistory();
+}
+
+function apiUrl(action){return settings.sheetUrl+"?action="+encodeURIComponent(action)}
+async function getRemote(action){
+  const r=await fetch(apiUrl(action),{method:"GET",cache:"no-store"});
+  if(!r.ok)throw new Error("HTTP "+r.status);
+  return await r.json();
+}
+async function postRemote(payload){
+  const body="payload="+encodeURIComponent(JSON.stringify(payload));
+  await fetch(settings.sheetUrl,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/x-www-form-urlencoded"},body});
+}
+async function testConnection(){
+  const box=document.getElementById("settingsResult");
+  box.innerHTML='<div class="notice">Testing…</div>';
+  try{
+    const d=await getRemote("status");
+    if(!d.success)throw new Error(d.error||"API error");
+    box.innerHTML='<div class="notice success">Connected. Google Apps Script is responding.</div>';
+  }catch(e){
+    box.innerHTML='<div class="notice error">Could not read the API. Check deployment access and URL. Saving may still work through POST.</div>';
+  }
+}
+async function syncAll(){
+  setStatus("Syncing…","busy");
+  try{
+    const d=await getRemote("all");
+    if(!d.success)throw new Error(d.error||"Sync failed");
+    mergeRemote(d.data||{});
+    saveState();
+    renderAll();
+    setStatus("Synced","ok");
+    const n=document.getElementById("dashboardNotice");
+    n.innerHTML='<div class="notice success">Google Sheets synced successfully.</div>';
+    setTimeout(()=>n.innerHTML="",3500);
+  }catch(e){
+    setStatus("Offline","")
+    document.getElementById("dashboardNotice").innerHTML='<div class="notice warning">Using local data. Google Sheets could not be read right now.</div>';
+  }
+}
+function mergeRemote(d){
+  // Remote rows are authoritative for synced categories. Keep local-only rows only when
+  // they have not yet been confirmed remotely; timestamp IDs are not stored in Sheets,
+  // so we merge by stable row content to avoid obvious duplicates.
+  state.weights=dedupe([...state.weights,...(d.weight||[]).map(x=>({date:x.date,weight:num(x.weight),average7:num(x.average7),notes:x.notes||""}))],"weights");
+  state.measurements=dedupe([...state.measurements,...(d.measurements||[])],"measurements");
+  state.workouts=dedupe([...state.workouts,...(d.workouts||[])],"workouts");
+  state.habits=dedupe([...state.habits,...(d.habits||[])],"habits");
+  state.food=dedupe([...state.food,...(d.food||[])],"food");
+}
+function dedupe(arr,type){
+  const seen=new Set();
+  return arr.filter(x=>{
+    let key;
+    if(type==="weights")key=[x.date,x.weight,x.average7,x.notes].join("|");
+    if(type==="measurements")key=[x.date,x.waist,x.narrow,x.neck,x.chest,x.arm,x.thigh].join("|");
+    if(type==="workouts")key=(x.sessionId ? ["session",x.sessionId,x.set,x.exercise].join("|") : [x.date,x.day,x.focus,x.exercise,x.set,x.weight,x.reps,x.rir,x.notes].join("|"));
+    if(type==="habits")key=[x.date,x.steps,x.sleep,x.water,x.cardio,x.mood,x.energy,x.notes].join("|");
+    if(type==="food")key=[x.date,x.meal,x.food,x.quantity,x.protein,x.calories,x.notes].join("|");
+    if(seen.has(key))return false;seen.add(key);return true;
+  });
+}
+
+async function saveAndSync(payload, localUpdate){
+  localUpdate();saveState();renderAll();setStatus("Saving…","busy");
+  try{await postRemote(payload);setStatus("Saved","ok");setTimeout(()=>setStatus("Synced","ok"),1200)}
+  catch(e){setStatus("Local only","")}
+}
+
+function latestByDate(arr){return [...arr].sort((a,b)=>String(b.date).localeCompare(String(a.date)))[0]}
+function avg(a){return a.length?a.reduce((s,x)=>s+x,0)/a.length:null}
+function trend(arr,key){
+  const xs=[...arr].filter(x=>num(x[key])!==null).sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+  if(xs.length<2)return null;
+  return num(xs[xs.length-1][key])-num(xs[0][key]);
+}
+
+function renderDashboard(){
+  const w=[...state.weights].sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+  const m=[...state.measurements].sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+  const lastW=latestByDate(w), lastM=latestByDate(m);
+  const wTrend=trend(w,"weight"), waistTrend=trend(m,"waist");
+  document.getElementById("kpis").innerHTML=[
+    ["Weight",lastW?.weight!=null?lastW.weight.toFixed(1)+" kg":"—",wTrend==null?"":`${wTrend>0?"+":""}${wTrend.toFixed(1)} kg`],
+    ["Waist",lastM?.waist!=null?lastM.waist.toFixed(1)+" in":"—",waistTrend==null?"":`${waistTrend>0?"+":""}${waistTrend.toFixed(1)} in`],
+    ["Workout rows",state.workouts.length,""],
+    ["Recent sleep",recentSleep(),"h avg"]
+  ].map(x=>`<div class="card kpi"><div class="label">${x[0]}</div><div class="value big">${x[1]}</div><div class="delta muted">${x[2]}</div></div>`).join("");
+  drawLine("weightChart",w.map(x=>[x.date,x.weight]).filter(x=>x[1]!=null),"kg");
+  drawLine("waistChart",m.map(x=>[x.date,x.waist]).filter(x=>x[1]!=null),"in");
+  const day=new Date().toLocaleDateString("en-US",{weekday:"long"});
+  const p=PLAN[day];
+  document.getElementById("todayPlan").innerHTML=p.exercises.length?`<div class="pill">${p.focus}</div><ul>${p.exercises.map(x=>`<li>${esc(x[0])} — ${x[3]}×${x[4]}</li>`).join("")}</ul>`:`<div class="notice">${p.focus}. Keep activity easy today.</div>`;
+  const rec=recoveryScore();
+  document.getElementById("recovery").innerHTML=`<div class="big">${rec}/100</div><div class="muted">${rec>=80?"Good to train normally":rec>=60?"Train, but keep effort controlled":"Prioritize recovery and an easy session"}</div><div style="margin-top:10px" class="small">Based on recent sleep, recent workout frequency and today's habit data.</div>`;
+}
+function recentSleep(){
+  const a=state.habits.filter(x=>num(x.sleep)!=null).slice(-7).map(x=>num(x.sleep));
+  return a.length?avg(a).toFixed(1):"—";
+}
+function recoveryScore(){
+  let score=60;
+  const h=state.habits.filter(x=>x.date>=new Date(Date.now()-6*864e5).toISOString().slice(0,10));
+  const s=h.filter(x=>num(x.sleep)!=null).map(x=>num(x.sleep));
+  if(s.length){const a=avg(s);score+=a>=7?20:a>=6?10:-10}
+  const recent=state.workouts.filter(x=>x.date>=new Date(Date.now()-6*864e5).toISOString().slice(0,10));
+  const days=new Set(recent.map(x=>x.date)).size;
+  if(days<=3)score+=10;else if(days>=5)score-=10;
+  const todayH=state.habits.find(x=>x.date===today());
+  if(todayH?.energy==="High"||todayH?.energy==="Good")score+=10;
+  if(todayH?.energy==="Low")score-=15;
+  return Math.max(0,Math.min(100,score));
+}
+
+function drawLine(id,data,suffix){
+  const c=document.getElementById(id),ctx=c.getContext("2d"),dpr=window.devicePixelRatio||1;
+  const w=c.clientWidth||500,h=210;c.width=w*dpr;c.height=h*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);
+  if(data.length<2){ctx.fillStyle="#697386";ctx.font="13px system-ui";ctx.fillText("Not enough data yet",15,30);return}
+  const vals=data.map(x=>Number(x[1])),min=Math.min(...vals),max=Math.max(...vals),pad=28;
+  const range=max-min||1;
+  ctx.strokeStyle="#e5e9f0";ctx.lineWidth=1;
+  for(let i=0;i<4;i++){const y=pad+(h-pad*1.6)*i/3;ctx.beginPath();ctx.moveTo(pad,y);ctx.lineTo(w-10,y);ctx.stroke()}
+  ctx.strokeStyle="#2563eb";ctx.lineWidth=2.5;ctx.beginPath();
+  data.forEach((p,i)=>{const x=pad+(w-pad-15)*i/(data.length-1),y=pad+(h-pad*1.6)*(1-(vals[i]-min)/range);i?ctx.lineTo(x,y):ctx.moveTo(x,y)});
+  ctx.stroke();ctx.fillStyle="#172033";ctx.font="11px system-ui";
+  ctx.fillText(max.toFixed(1)+" "+suffix,pad,13);ctx.fillText(min.toFixed(1)+" "+suffix,pad,h-3);
+}
+
+function initWorkout(){
+  document.getElementById("woDate").value ||= today();
+  document.getElementById("woDate").onchange=renderWorkoutForm;
+  const day=new Date(document.getElementById("woDate").value+"T12:00:00").toLocaleDateString("en-US",{weekday:"long"});
+  const sel=document.getElementById("woDay");
+  sel.innerHTML=Object.keys(PLAN).map(d=>`<option ${d===day?"selected":""}>${d}</option>`).join("");
+  renderWorkoutForm();
+}
+function resetWorkout(){initWorkout()}
+function clearSet(btn){
+  const row=btn.closest(".setrow");
+  if(!row)return;
+  row.querySelectorAll("input").forEach(i=>i.value="");
+}
+function lastExercise(ex){
+  const rows=state.workouts.filter(x=>x.exercise===ex).sort((a,b)=>String(b.date).localeCompare(String(a.date))||Number(b.set)-Number(a.set));
+  return rows;
+}
+function suggestion(ex,repMin,repMax){
+  const rows=lastExercise(ex);
+  if(!rows.length)return {weight:"",reps:repMin,rir:2,note:"Start conservatively; finish with ~2 reps in reserve."};
+  const latestDate=rows[0].date, latest=rows.filter(x=>x.date===latestDate).sort((a,b)=>Number(a.set)-Number(b.set));
+  const avgReps=avg(latest.map(x=>num(x.reps)).filter(x=>x!=null))||repMin;
+  const avgWeight=avg(latest.map(x=>num(x.weight)).filter(x=>x!=null));
+  const avgRir=avg(latest.map(x=>num(x.rir)).filter(x=>x!=null));
+  let weight=avgWeight, reps=Math.round(avgReps), note="Repeat last load and aim to improve control.";
+  if(avgWeight!=null && avgReps>=repMax && (avgRir==null||avgRir>=2)){weight=avgWeight+increment(ex);reps=repMin;note="Progression: add a small load and return to the lower end of the rep range."}
+  else if(avgRir!=null && avgRir<1){reps=Math.max(repMin,reps-2);note="Last session was very hard; reduce reps and keep 1–2 RIR."}
+  return {weight:weight??"",reps:Math.min(repMax,Math.max(repMin,reps)),rir:2,note};
+}
+function increment(ex){return /carry|push-up/i.test(ex)?0:1}
+function workoutDraftKey(date,day){
+  return `${date}|${day}`;
+}
+
+function getWorkoutDraft(date,day){
+  const key=workoutDraftKey(date,day);
+  if(!state.drafts) state.drafts={};
+  if(!state.drafts[key]){
+    state.drafts[key]={
+      sessionId:"ws_"+Date.now().toString(36)+"_"+Math.random().toString(36).slice(2,8),
+      date,day,focus:PLAN[day]?.focus||"",
+      exercises:{},completed:false,updatedAt:new Date().toISOString()
+    };
+  }
+  return state.drafts[key];
+}
+
+function setWorkoutAutosaveStatus(text,kind="muted"){
+  const el=document.getElementById("workoutAutosaveStatus");
+  if(!el)return;
+  el.textContent=text;
+  el.className="small "+(kind==="ok"?"":"muted");
+  if(kind==="ok")el.style.color="var(--good)";
+  else el.style.color="";
+}
+
+let workoutAutosaveTimer=null;
+let workoutAutosaveQueue=Promise.resolve();
+
+function scheduleWorkoutAutosave(){
+  const date=document.getElementById("woDate").value||today();
+  const day=document.getElementById("woDay").value;
+  captureWorkoutDraft(date,day);
+
+  clearTimeout(workoutAutosaveTimer);
+  setWorkoutAutosaveStatus("Saving locally…");
+
+  workoutAutosaveTimer=setTimeout(()=>{
+    autosaveWorkoutDraft(date,day);
+  },800);
+}
+
+function captureWorkoutDraft(date,day){
+  const p=PLAN[day];
+  const draft=getWorkoutDraft(date,day);
+
+  draft.date=date;
+  draft.day=day;
+  draft.focus=p.focus;
+  draft.updatedAt=new Date().toISOString();
+
+  p.exercises.forEach((e,idx)=>{
+    const weights=[...document.querySelectorAll(`.set-weight[data-ex="${idx}"]`)].map(x=>x.value);
+    const reps=[...document.querySelectorAll(`.set-reps[data-ex="${idx}"]`)].map(x=>x.value);
+    const rirs=[...document.querySelectorAll(`.set-rir[data-ex="${idx}"]`)].map(x=>x.value);
+    const notes=document.querySelector(`.ex-note[data-ex="${idx}"]`)?.value||"";
+
+    draft.exercises[e[0]]={
+      name:e[0],weights,reps,rirs,notes
+    };
+  });
+
+  saveState();
+  return draft;
+}
+
+function draftExercisesPayload(draft){
+  return Object.values(draft.exercises||{})
+    .map(ex=>({
+      name:ex.name,
+      weights:(ex.weights||[]).map(v=>num(v)||""),
+      reps:(ex.reps||[]).map(v=>num(v)||""),
+      rirs:(ex.rirs||[]).map(v=>num(v)??""),
+      notes:ex.notes||""
+    }))
+    .filter(ex=>ex.reps.some(Boolean));
+}
+
+function updateLocalWorkoutRowsFromDraft(draft){
+  const rows=draftExercisesPayload(draft);
+  state.workouts=state.workouts.filter(x=>x.sessionId!==draft.sessionId);
+
+  rows.forEach(ex=>{
+    ex.reps.forEach((reps,i)=>{
+      if(!reps)return;
+      state.workouts.push({
+        sessionId:draft.sessionId,
+        date:draft.date,
+        day:draft.day,
+        focus:draft.focus,
+        exercise:ex.name,
+        set:i+1,
+        weight:num(ex.weights[i]),
+        reps:num(reps),
+        rir:num(ex.rirs[i]),
+        notes:ex.notes||""
+      });
+    });
+  });
+}
+
+function autosaveWorkoutDraft(date,day){
+  const draft=captureWorkoutDraft(date,day);
+  updateLocalWorkoutRowsFromDraft(draft);
+  saveState();
+  renderHistory();
+
+  const exercises=draftExercisesPayload(draft);
+
+  // Nothing entered yet: keep the draft locally but don't create a Sheet row.
+  if(!exercises.length){
+    setWorkoutAutosaveStatus("Saved locally · waiting for your first set");
+    return;
+  }
+
+  setWorkoutAutosaveStatus("Saving to Google Sheets…");
+
+  const payload={
+    type:"workout",
+    sessionId:draft.sessionId,
+    date:draft.date,
+    day:draft.day,
+    focus:draft.focus,
+    exercises
+  };
+
+  // Queue autosaves so two rapid edits cannot race each other.
+  workoutAutosaveQueue=workoutAutosaveQueue
+    .then(()=>postRemote(payload))
+    .then(()=>{
+      setWorkoutAutosaveStatus("Autosaved ✓","ok");
+      setStatus("Saved","ok");
+    })
+    .catch(()=>{
+      setWorkoutAutosaveStatus("Saved locally · Sheets will sync when available");
+      setStatus("Local only","");
+    });
+}
+
+function loadDraftIntoForm(draft,p){
+  p.exercises.forEach((e,idx)=>{
+    const ex=draft.exercises?.[e[0]];
+    if(!ex)return;
+
+    [...document.querySelectorAll(`.set-weight[data-ex="${idx}"]`)].forEach((el,i)=>{
+      if(ex.weights?.[i]!==undefined)el.value=ex.weights[i];
+    });
+    [...document.querySelectorAll(`.set-reps[data-ex="${idx}"]`)].forEach((el,i)=>{
+      if(ex.reps?.[i]!==undefined)el.value=ex.reps[i];
+    });
+    [...document.querySelectorAll(`.set-rir[data-ex="${idx}"]`)].forEach((el,i)=>{
+      if(ex.rirs?.[i]!==undefined)el.value=ex.rirs[i];
+    });
+
+    const note=document.querySelector(`.ex-note[data-ex="${idx}"]`);
+    if(note)note.value=ex.notes||"";
+  });
+}
+
+function attachWorkoutAutosaveListeners(){
+  document.querySelectorAll("#workoutForm input").forEach(el=>{
+    el.addEventListener("input",scheduleWorkoutAutosave);
+    el.addEventListener("change",scheduleWorkoutAutosave);
+  });
+}
+
+function renderWorkoutForm(){
+  const day=document.getElementById("woDay").value, p=PLAN[day];
+  const date=document.getElementById("woDate").value||today();
+  const draft=getWorkoutDraft(date,day);
+
+  if(!p.exercises.length){
+    document.getElementById("workoutForm").innerHTML=
+      `<div class="card"><div class="notice">${p.focus}. No resistance session scheduled.</div></div>`;
+    setWorkoutAutosaveStatus("No workout scheduled");
+    return;
+  }
+
+  document.getElementById("workoutForm").innerHTML=p.exercises.map((e,idx)=>{
+    const s=suggestion(e[0],e[3],e[4]);
+    const saved=draft.exercises?.[e[0]];
+    const rest=e[5]||60;
+    const sets=Array.from({length:e[2]},(_,i)=>{
+      const weight=saved?.weights?.[i] ?? s.weight;
+      const reps=saved?.reps?.[i] ?? s.reps;
+      const rir=saved?.rirs?.[i] ?? s.rir;
+      return `<div class="setrow">
+        <div class="setno">S${i+1}</div>
+        <input class="set-weight" data-ex="${idx}" type="number" step="0.5" placeholder="kg" value="${esc(weight)}">
+        <input class="set-reps" data-ex="${idx}" type="number" min="1" placeholder="reps" value="${esc(reps)}">
+        <input class="set-rir" data-ex="${idx}" type="number" min="0" max="5" placeholder="RIR" value="${esc(rir)}">
+        <button type="button" class="btn secondary" title="Start ${rest}s rest" onclick="startRest(${rest})">⏱</button>
+        <button type="button" class="btn ghost" onclick="clearSet(this);scheduleWorkoutAutosave()">×</button>
+      </div>`;
+    }).join("");
+
+    return `<div class="exercise">
+      <div class="exercise-top">
+        <div><div class="exercise-name">${esc(e[0])}</div><div class="meta">${esc(e[1])} · target ${e[2]} sets × ${e[3]}–${e[4]} · rest ${rest}s</div></div>
+        <span class="pill">${esc(s.note)}</span>
+      </div>
+      <div class="sets">${sets}</div>
+      <input class="ex-note" data-ex="${idx}" placeholder="Exercise note (optional)" value="${esc(saved?.notes||"")}">
+    </div>`;
+  }).join("");
+
+  attachWorkoutAutosaveListeners();
+
+  const hasSaved=draftExercisesPayload(draft).length>0;
+  setWorkoutAutosaveStatus(hasSaved?"Draft restored · autosave is on":"Autosave is on");
+}
+
+function saveWorkoutSession(){
+  const date=document.getElementById("woDate").value||today();
+  const day=document.getElementById("woDay").value;
+  const p=PLAN[day];
+  const draft=captureWorkoutDraft(date,day);
+
+  if(!draftExercisesPayload(draft).length){
+    alert("Enter at least one completed set.");
+    return;
+  }
+
+  draft.completed=true;
+  draft.updatedAt=new Date().toISOString();
+  updateLocalWorkoutRowsFromDraft(draft);
+  saveState();
+
+  const payload={
+    type:"workout",
+    sessionId:draft.sessionId,
+    date,day,focus:p.focus,
+    exercises:draftExercisesPayload(draft)
+  };
+
+  setWorkoutAutosaveStatus("Saving final session…");
+  workoutAutosaveQueue=workoutAutosaveQueue
+    .then(()=>postRemote(payload))
+    .then(()=>{
+      setWorkoutAutosaveStatus("Workout saved ✓","ok");
+      setStatus("Saved","ok");
+      renderHistory();
+    })
+    .catch(()=>{
+      setWorkoutAutosaveStatus("Saved locally · Sheets will sync when available");
+      setStatus("Local only","");
+    });
+}
+
+function saveWeightForm(){
+  const data={date:document.getElementById("bwDate").value||today(),weight:num(document.getElementById("bwWeight").value),average7:num(document.getElementById("bwAvg").value),notes:document.getElementById("bwNotes").value};
+  if(data.weight==null)return;
+  saveAndSync({type:"weight",...data},()=>state.weights.push(data));
+}
+function saveMeasurementForm(){
+  const data={date:document.getElementById("mDate").value||today(),waist:num(mWaist.value),narrow:num(mNarrow.value),neck:num(mNeck.value),chest:num(mChest.value),arm:num(mArm.value),thigh:num(mThigh.value)};
+  saveAndSync({type:"measurement",...data},()=>state.measurements.push(data));
+}
+function saveHabitForm(){
+  const data={date:hDate.value||today(),steps:num(hSteps.value),sleep:num(hSleep.value),water:num(hWater.value),cardio:hCardio.value,mood:hMood.value,energy:hEnergy.value,notes:hNotes.value};
+  saveAndSync({type:"habit",...data},()=>state.habits.push(data));
+}
+function saveFoodForm(){
+  const data={date:fDate.value||today(),meal:fMeal.value,food:fFood.value,quantity:fQty.value,protein:num(fProtein.value),calories:num(fCalories.value),notes:fNotes.value};
+  saveAndSync({type:"food",...data},()=>state.food.push(data));
+}
+
+function renderBody(){
+  bwDate.value ||= today();mDate.value ||= today();
+  const rows=[...state.measurements].sort((a,b)=>String(b.date).localeCompare(String(a.date))).slice(0,8);
+  document.getElementById("bodyTable").innerHTML=rows.length?`<div class="table-wrap"><table><thead><tr><th>Date</th><th>Waist</th><th>Narrow</th><th>Neck</th><th>Chest</th><th>Arm</th><th>Thigh</th></tr></thead><tbody>${rows.map(x=>`<tr><td>${esc(x.date)}</td><td>${x.waist??"—"}</td><td>${x.narrow??"—"}</td><td>${x.neck??"—"}</td><td>${x.chest??"—"}</td><td>${x.arm??"—"}</td><td>${x.thigh??"—"}</td></tr>`).join("")}</tbody></table></div>`:'<div class="empty">No measurements yet.</div>';
+}
+function renderHabits(){
+  hDate.value ||= today();
+  const rows=[...state.habits].sort((a,b)=>String(b.date).localeCompare(String(a.date))).slice(0,10);
+  document.getElementById("habitTable").innerHTML=rows.length?`<div class="table-wrap"><table><thead><tr><th>Date</th><th>Steps</th><th>Sleep</th><th>Water</th><th>Cardio</th><th>Mood</th><th>Energy</th></tr></thead><tbody>${rows.map(x=>`<tr><td>${esc(x.date)}</td><td>${x.steps??"—"}</td><td>${x.sleep??"—"}</td><td>${x.water??"—"}</td><td>${esc(x.cardio)}</td><td>${esc(x.mood)}</td><td>${esc(x.energy)}</td></tr>`).join("")}</tbody></table></div>`:'<div class="empty">No habit entries yet.</div>';
+}
+function renderFood(){
+  fDate.value ||= today();
+  const rows=[...state.food].sort((a,b)=>String(b.date).localeCompare(String(a.date))).slice(0,12);
+  document.getElementById("foodTable").innerHTML=rows.length?`<div class="table-wrap"><table><thead><tr><th>Date</th><th>Meal</th><th>Food</th><th>Qty</th><th>Protein</th><th>Calories</th></tr></thead><tbody>${rows.map(x=>`<tr><td>${esc(x.date)}</td><td>${esc(x.meal)}</td><td>${esc(x.food)}</td><td>${esc(x.quantity)}</td><td>${x.protein??"—"}</td><td>${x.calories??"—"}</td></tr>`).join("")}</tbody></table></div>`:'<div class="empty">No food entries yet.</div>';
+}
+function renderHistory(){
+  countWorkouts.textContent=state.workouts.length;countWeights.textContent=state.weights.length;countHabits.textContent=state.habits.length;
+  const rows=[...state.workouts].sort((a,b)=>String(b.date).localeCompare(String(a.date))||Number(b.set)-Number(a.set)).slice(0,25);
+  historyTable.innerHTML=rows.length?`<div class="table-wrap"><table><thead><tr><th>Date</th><th>Day</th><th>Exercise</th><th>Set</th><th>Weight</th><th>Reps</th><th>RIR</th></tr></thead><tbody>${rows.map(x=>`<tr><td>${esc(x.date)}</td><td>${esc(x.day)}</td><td>${esc(x.exercise)}</td><td>${x.set??"—"}</td><td>${x.weight??"—"}</td><td>${x.reps??"—"}</td><td>${x.rir??"—"}</td></tr>`).join("")}</tbody></table></div>`:'<div class="empty">No workouts yet.</div>';
+}
+function renderSettings(){sheetUrl.value=settings.sheetUrl}
+function renderAll(){renderDashboard();renderBody();renderHabits();renderFood();renderHistory();renderSettings()}
+function saveSettings(){settings.sheetUrl=sheetUrl.value.trim()||DEFAULT_URL;localStorage.setItem(SETTINGS_KEY,JSON.stringify(settings));document.getElementById("settingsResult").innerHTML='<div class="notice success">Settings saved.</div>'}
+function exportJSON(){
+  const blob=new Blob([JSON.stringify({exportedAt:new Date().toISOString(),state},null,2)],{type:"application/json"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="fitness-tracker-backup.json";a.click();URL.revokeObjectURL(a.href);
+}
+function importJSON(){
+  const i=document.createElement("input");i.type="file";i.accept=".json,application/json";i.onchange=async()=>{try{const d=JSON.parse(await i.files[0].text());if(d.state){Object.assign(state,d.state);saveState();renderAll();alert("Backup imported.")}}catch(e){alert("Invalid backup file.")}};i.click();
+}
+function clearLocal(){if(confirm("Clear this browser's local cache? Google Sheets data will not be deleted.")){localStorage.removeItem(KEY);location.reload()}}
+
+document.getElementById("woDate").value=today();
+bwDate.value=today();mDate.value=today();hDate.value=today();fDate.value=today();
+renderAll();
+setStatus("Local","");
+
+window.addEventListener("online",()=>setStatus("Online","ok"));
+window.addEventListener("offline",()=>setStatus("Offline",""));
+if(navigator.onLine)setTimeout(syncAll,600);
+if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
+</script>
+</body>
+</html>
